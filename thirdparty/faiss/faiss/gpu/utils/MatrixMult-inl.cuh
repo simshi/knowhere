@@ -75,7 +75,11 @@ cublasStatus_t rawGemm(
                 C,
                 CUDA_R_32F,
                 ldc,
+#ifndef KNOWHERE_WITH_MACA
                 CUBLAS_COMPUTE_32F_PEDANTIC,
+#else
+                CUDA_R_32F,
+#endif
                 CUBLAS_GEMM_DEFAULT);
     }
 #endif

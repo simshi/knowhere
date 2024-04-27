@@ -29,7 +29,7 @@ template <
         bool Dir,
         typename Comp,
         bool FullMerge>
-inline __device__ void blockMergeSmall(K* listK, V* listV) {
+__forceinline__ __device__ void blockMergeSmall(K* listK, V* listV) {
     static_assert(utils::isPowerOf2(L), "L must be a power-of-2");
     static_assert(
             utils::isPowerOf2(NumThreads), "NumThreads must be a power-of-2");
@@ -119,7 +119,7 @@ template <
         bool Dir,
         typename Comp,
         bool FullMerge>
-inline __device__ void blockMergeLarge(K* listK, V* listV) {
+__forceinline__ __device__ void blockMergeLarge(K* listK, V* listV) {
     static_assert(utils::isPowerOf2(L), "L must be a power-of-2");
     static_assert(L >= kWarpSize, "merge list size must be >= 32");
     static_assert(
@@ -227,7 +227,7 @@ template <
         typename Comp,
         bool FullMerge>
 struct BlockMerge<NumThreads, K, V, N, L, Dir, Comp, true, FullMerge> {
-    static inline __device__ void merge(K* listK, V* listV) {
+    static __forceinline__ __device__ void merge(K* listK, V* listV) {
         constexpr int kNumParallelMerges = NumThreads / L;
         constexpr int kNumIterations = N / kNumParallelMerges;
 
@@ -281,7 +281,7 @@ template <
         typename Comp,
         bool FullMerge>
 struct BlockMerge<NumThreads, K, V, N, L, Dir, Comp, false, FullMerge> {
-    static inline __device__ void merge(K* listK, V* listV) {
+    static __forceinline__ __device__ void merge(K* listK, V* listV) {
         // Each pair of lists is merged sequentially
 #pragma unroll
         for (int i = 0; i < N; ++i) {
@@ -302,7 +302,7 @@ template <
         bool Dir,
         typename Comp,
         bool FullMerge = true>
-inline __device__ void blockMerge(K* listK, V* listV) {
+__forceinline__ __device__ void blockMerge(K* listK, V* listV) {
     constexpr bool kSmallerThanBlock = (L <= NumThreads);
 
     BlockMerge<

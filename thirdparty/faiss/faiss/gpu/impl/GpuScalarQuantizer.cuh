@@ -274,7 +274,7 @@ struct Codec<QuantizerType::QT_8bit_uniform, DimMultiple> {
             const {
         if (DimMultiple > 1) {
             // should not be called
-            assert(false);
+            // assert(false);
         }
 
         // otherwise does not need implementing
@@ -317,7 +317,7 @@ struct Codec<QuantizerType::QT_8bit_uniform, DimMultiple> {
             float v[kDimPerIter]) const {
         if (DimMultiple > 1) {
             // should not be called
-            assert(false);
+            // assert(false);
         }
 
         // otherwise does not need implementing
@@ -411,7 +411,7 @@ struct Codec<QuantizerType::QT_8bit, DimMultiple> {
             const {
         if (DimMultiple > 1) {
             // should not be called
-            assert(false);
+            // assert(false);
         }
 
         // otherwise does not need implementing
@@ -455,7 +455,7 @@ struct Codec<QuantizerType::QT_8bit, DimMultiple> {
             float v[kDimPerIter]) const {
         if (DimMultiple > 1) {
             // should not be called
-            assert(false);
+            // assert(false);
         }
 
         // otherwise does not need implementing

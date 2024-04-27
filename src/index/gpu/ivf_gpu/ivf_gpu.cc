@@ -22,11 +22,12 @@
 #include "faiss/gpu/GpuIndexIVFScalarQuantizer.h"
 #include "faiss/index_io.h"
 #include "index/gpu/gpu_res_mgr.h"
-#include "index/ivf_gpu/ivf_gpu_config.h"
+#include "index/gpu/ivf_gpu/ivf_gpu_config.h"
 #include "io/memory_io.h"
 #include "knowhere/comp/index_param.h"
 #include "knowhere/factory.h"
 #include "knowhere/log.h"
+#include "knowhere/utils.h"
 
 namespace knowhere {
 
@@ -66,9 +67,9 @@ class GpuIvfIndexNode : public IndexNode {
         auto dim = dataset.GetDim();
         auto ivf_gpu_cfg = static_cast<const typename KnowhereConfigType<T>::Type&>(cfg);
 
-        auto metric = Str2FaissMetricType(ivf_gpu_cfg.metric_type);
+        auto metric = Str2FaissMetricType(ivf_gpu_cfg.metric_type.value());
         if (!metric.has_value()) {
-            LOG_KNOWHERE_WARNING_ << "please check metric value: " << ivf_gpu_cfg.metric_type;
+            LOG_KNOWHERE_WARNING_ << "please check metric value: " << ivf_gpu_cfg.metric_type.value();
             return metric.error();
         }
 
@@ -80,22 +81,22 @@ class GpuIvfIndexNode : public IndexNode {
             if constexpr (std::is_same<T, faiss::IndexIVFFlat>::value) {
                 faiss::gpu::GpuIndexIVFFlatConfig f_cfg;
                 f_cfg.device = static_cast<int32_t>(gpu_res->gpu_id_);
-                index = std::make_unique<faiss::gpu::GpuIndexIVFFlat>(gpu_res->faiss_res_.get(), dim, ivf_gpu_cfg.nlist,
-                                                                      metric.value(), f_cfg);
+                index = std::make_unique<faiss::gpu::GpuIndexIVFFlat>(gpu_res->faiss_res_.get(), dim,
+                                                                      ivf_gpu_cfg.nlist.value(), metric.value(), f_cfg);
             }
             if constexpr (std::is_same<T, faiss::IndexIVFPQ>::value) {
                 faiss::gpu::GpuIndexIVFPQConfig f_cfg;
                 f_cfg.device = static_cast<int32_t>(gpu_res->gpu_id_);
-                index = std::make_unique<faiss::gpu::GpuIndexIVFPQ>(gpu_res->faiss_res_.get(), dim, ivf_gpu_cfg.nlist,
-                                                                    ivf_gpu_cfg.m, ivf_gpu_cfg.nbits, metric.value(),
-                                                                    f_cfg);
+                index = std::make_unique<faiss::gpu::GpuIndexIVFPQ>(gpu_res->faiss_res_.get(), dim,
+                                                                    ivf_gpu_cfg.nlist.value(), ivf_gpu_cfg.m.value(),
+                                                                    ivf_gpu_cfg.nbits.value(), metric.value(), f_cfg);
             }
             if constexpr (std::is_same<T, faiss::IndexIVFScalarQuantizer>::value) {
                 faiss::gpu::GpuIndexIVFScalarQuantizerConfig f_cfg;
                 f_cfg.device = static_cast<int32_t>(gpu_res->gpu_id_);
                 index = std::make_unique<faiss::gpu::GpuIndexIVFScalarQuantizer>(
-                    gpu_res->faiss_res_.get(), dim, ivf_gpu_cfg.nlist, faiss::QuantizerType::QT_8bit, metric.value(),
-                    true, f_cfg);
+                    gpu_res->faiss_res_.get(), dim, ivf_gpu_cfg.nlist.value(), faiss::QuantizerType::QT_8bit,
+                    metric.value(), true, f_cfg);
             }
             index->train(rows, reinterpret_cast<const float*>(tensor));
             res_ = gpu_res;
@@ -135,7 +136,7 @@ class GpuIvfIndexNode : public IndexNode {
 
         constexpr int64_t block_size = 2048;
         auto rows = dataset.GetRows();
-        auto k = ivf_gpu_cfg.k;
+        auto k = ivf_gpu_cfg.k.value();
         auto tensor = dataset.GetTensor();
         auto dim = dataset.GetDim();
         float* dis = new (std::nothrow) float[rows * k];
@@ -146,7 +147,7 @@ class GpuIvfIndexNode : public IndexNode {
             for (int i = 0; i < rows; i += block_size) {
                 int64_t search_size = (rows - i > block_size) ? block_size : (rows - i);
                 gpu_index->search_thread_safe(search_size, reinterpret_cast<const float*>(tensor) + i * dim, k,
-                                              ivf_gpu_cfg.nprobe, dis + i * k, ids + i * k, bitset);
+                                              ivf_gpu_cfg.nprobe.value(), dis + i * k, ids + i * k, bitset);
             }
         } catch (std::exception& e) {
             std::unique_ptr<float> auto_delete_dis(dis);
@@ -155,22 +156,22 @@ class GpuIvfIndexNode : public IndexNode {
             return expected<DataSetPtr>::Err(Status::faiss_inner_error, e.what());
         }
 
-        return GenResultDataSet(rows, ivf_gpu_cfg.k, ids, dis);
+        return GenResultDataSet(rows, ivf_gpu_cfg.k.value(), ids, dis);
     }
 
     expected<DataSetPtr>
     RangeSearch(const DataSet& dataset, const Config& cfg, const BitsetView& bitset) const override {
-        return Status::not_implemented;
+        return expected<DataSetPtr>::Err(Status::not_implemented, "");
     }
 
     expected<DataSetPtr>
     GetVectorByIds(const DataSet& dataset) const override {
-        return Status::not_implemented;
+        return expected<DataSetPtr>::Err(Status::not_implemented, "");
     }
 
     expected<DataSetPtr>
     GetIndexMeta(const Config& cfg) const override {
-        return Status::not_implemented;
+        return expected<DataSetPtr>::Err(Status::not_implemented, "");
     }
 
     Status
@@ -268,6 +269,19 @@ class GpuIvfIndexNode : public IndexNode {
         }
     }
 
+    bool
+    HasRawData(const std::string& metric_type) const override {
+        if constexpr (std::is_same_v<faiss::IndexIVFFlat, T>) {
+            return !IsMetricType(metric_type, metric::COSINE);
+        }
+        if constexpr (std::is_same_v<faiss::IndexIVFPQ, T>) {
+            return false;
+        }
+        if constexpr (std::is_same_v<faiss::IndexIVFScalarQuantizer, T>) {
+            return false;
+        }
+    }
+
  private:
     mutable ResWPtr res_;
     std::unique_ptr<faiss::Index> index_;
@@ -280,6 +294,16 @@ KNOWHERE_REGISTER_GLOBAL(GPU_FAISS_IVF_PQ, [](const int32_t& version, const Obje
     return Index<GpuIvfIndexNode<faiss::IndexIVFPQ>>::Create(version, object);
 });
 KNOWHERE_REGISTER_GLOBAL(GPU_FAISS_IVF_SQ8, [](const int32_t& version, const Object& object) {
+    return Index<GpuIvfIndexNode<faiss::IndexIVFScalarQuantizer>>::Create(version, object);
+});
+
+KNOWHERE_REGISTER_GLOBAL(GPU_IVF_FLAT, [](const int32_t& version, const Object& object) {
+    return Index<GpuIvfIndexNode<faiss::IndexIVFFlat>>::Create(version, object);
+});
+KNOWHERE_REGISTER_GLOBAL(GPU_IVF_PQ, [](const int32_t& version, const Object& object) {
+    return Index<GpuIvfIndexNode<faiss::IndexIVFPQ>>::Create(version, object);
+});
+KNOWHERE_REGISTER_GLOBAL(GPU_IVF_SQ8, [](const int32_t& version, const Object& object) {
     return Index<GpuIvfIndexNode<faiss::IndexIVFScalarQuantizer>>::Create(version, object);
 });
 

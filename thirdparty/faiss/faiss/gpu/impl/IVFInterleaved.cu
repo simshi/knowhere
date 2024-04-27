@@ -145,23 +145,25 @@ void runIVFInterleavedScan2(
                     indicesOut)
 
     if (k == 1) {
-        IVF_SCAN_2(128, 1, 1);
+        IVF_SCAN_2(kSortThreadCount, 1, 1);
+#ifndef KNOWHERE_WITH_MACA
     } else if (k <= 32) {
         IVF_SCAN_2(128, 32, 2);
+#endif
     } else if (k <= 64) {
-        IVF_SCAN_2(128, 64, 3);
-    } else if (k <= 128) {
-        IVF_SCAN_2(128, 128, 3);
+        IVF_SCAN_2(kSortThreadCount, 64, 3);
+    } else if (k <= kSortThreadCount) {
+        IVF_SCAN_2(kSortThreadCount, 128, 3);
     } else if (k <= 256) {
-        IVF_SCAN_2(128, 256, 4);
+        IVF_SCAN_2(kSortThreadCount, 256, 4);
     } else if (k <= 512) {
-        IVF_SCAN_2(128, 512, 8);
+        IVF_SCAN_2(kSortThreadCount, 512, 8);
     } else if (k <= 1024) {
-        IVF_SCAN_2(128, 1024, 8);
+        IVF_SCAN_2(kSortThreadCount, 1024, 8);
     }
 #if GPU_MAX_SELECTION_K >= 2048
     else if (k <= 2048) {
-        IVF_SCAN_2(64, 2048, 8);
+        IVF_SCAN_2(kSortThreadCountFor2048, 2048, 8);
     }
 #endif
 }
@@ -189,8 +191,10 @@ void runIVFInterleavedScan(
 
     if (k == 1) {
         IVF_INTERLEAVED_CALL(1);
+#ifndef KNOWHERE_WITH_MACA
     } else if (k <= 32) {
         IVF_INTERLEAVED_CALL(32);
+#endif
     } else if (k <= 64) {
         IVF_INTERLEAVED_CALL(64);
     } else if (k <= 128) {

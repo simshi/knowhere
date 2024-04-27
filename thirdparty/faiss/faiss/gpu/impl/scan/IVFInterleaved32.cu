@@ -10,7 +10,9 @@
 namespace faiss {
 namespace gpu {
 
-IVF_INTERLEAVED_IMPL(128, 32, 2)
+#ifndef KNOWHERE_WITH_MACA
+IVF_INTERLEAVED_IMPL(kSortThreadCount, 32, 2)
+#endif
 
 }
 } // namespace faiss

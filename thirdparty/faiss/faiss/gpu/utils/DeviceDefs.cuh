@@ -18,7 +18,15 @@ namespace gpu {
 #endif
 
 // We validate this against the actual architecture in device initialization
+#ifndef KNOWHERE_WITH_MACA
 constexpr int kWarpSize = 32;
+constexpr int kSortThreadCount = 128;
+constexpr int kSortThreadCountFor2048 = 64;
+#else
+constexpr int kWarpSize = 64;
+constexpr int kSortThreadCount = 256;
+constexpr int kSortThreadCountFor2048 = 128;
+#endif
 
 // This is a memory barrier for intra-warp writes to shared memory.
 __forceinline__ __device__ void warpFence() {

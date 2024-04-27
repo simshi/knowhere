@@ -34,6 +34,8 @@ struct LoadStore {
     }
 };
 
+// TODO: Check if any specilizations possible for MACA
+#ifndef KNOWHERE_WITH_MACA
 template <>
 struct LoadStore<Half4> {
     static inline __device__ Half4 load(void* p) {
@@ -96,6 +98,8 @@ struct LoadStore<Half8> {
 #endif
     }
 };
+
+#endif // KNOWHERE_WITH_MACA
 
 } // namespace gpu
 } // namespace faiss

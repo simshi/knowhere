@@ -52,7 +52,7 @@ class DeviceVector {
         owner = false;
         alloc_.data = data;
         num_ = num;
-        capacity_ = capacity_;
+        capacity_ = capacity;
     }
 
     // Clear all allocated memory; reset to zero size

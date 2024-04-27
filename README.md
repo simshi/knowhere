@@ -39,6 +39,8 @@ $ export PATH=$PATH:$HOME/.local/bin
 
 ```bash
 $ mkdir build && cd build
+#RELEASE MACA
+$ conan install .. --build=missing -o with_ut=True -o with_maca=True -s compiler.libcxx=libstdc++11 -s build_type=Release
 #DEBUG CPU
 $ conan install .. --build=missing -o with_ut=True -s compiler.libcxx=libstdc++11 -s build_type=Debug
 #RELEASE CPU
