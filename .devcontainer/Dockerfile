@@ -43,6 +43,7 @@ RUN cd /usr/local && \
 
 ENV MACA_PATH=/opt/maca \
     CUDA_PATH=/opt/maca/tools/cu-bridge \
+    CUCC_PATH=/opt/maca/tools/cu-bridge \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/opt/maca/lib \
     PATH=/usr/local/go/bin:${PATH} \
     GOPROXY=goproxy.cn

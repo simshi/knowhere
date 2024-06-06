@@ -74,6 +74,7 @@ struct Index {
             : d(d),
               ntotal(0),
               verbose(false),
+              is_cosine(false),
               is_trained(true),
               metric_type(metric),
               metric_arg(0) {}

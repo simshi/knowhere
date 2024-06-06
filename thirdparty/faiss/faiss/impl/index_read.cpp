@@ -887,7 +887,7 @@ Index* read_index(IOReader* f, int io_flags) {
             idxrf = new IndexRefineFlat();
             *idxrf = *idxrf_old;
             delete idxrf_old;
-        } 
+        }
         idxrf->own_fields = true;
         idxrf->own_refine_index = true;
         idx = idxrf;

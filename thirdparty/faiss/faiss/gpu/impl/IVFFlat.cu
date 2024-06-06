@@ -52,10 +52,10 @@ IVFFlat::~IVFFlat() {}
 size_t IVFFlat::getGpuVectorsEncodingSize_(int numVecs) const {
     if (interleavedLayout_) {
         // bits per scalar code
-        int bits = scalarQ_ ? scalarQ_->bits : kWarpSize /* float */;
+        int bits = scalarQ_ ? scalarQ_->bits : 32 /* float */;
 
         // bytes to encode a block of 32 vectors (single dimension)
-        int bytesPerDimBlock = bits * 32 / 8;
+        int bytesPerDimBlock = bits * kWarpSize / 8;
 
         // bytes to fully encode 32 vectors
         int bytesPerBlock = bytesPerDimBlock * dim_;

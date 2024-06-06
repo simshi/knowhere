@@ -194,6 +194,7 @@ class GpuIvfIndexNode : public IndexNode {
             }
             std::shared_ptr<uint8_t[]> data(writer.data());
             binset.Append(Type(), data, writer.tellg());
+            LOG_KNOWHERE_INFO_ << "serialzie size:" << writer.tellg();
         } catch (std::exception& e) {
             LOG_KNOWHERE_WARNING_ << "faiss inner error, " << e.what();
             return Status::faiss_inner_error;
@@ -210,6 +211,7 @@ class GpuIvfIndexNode : public IndexNode {
             return Status::invalid_binary_set;
         }
         MemoryIOReader reader(binary->data.get(), binary->size);
+        LOG_KNOWHERE_INFO_ << "binary size:" << binary->size;
         try {
             std::unique_ptr<faiss::Index> index(faiss::read_index(&reader));
             auto gpu_res = GPUResMgr::GetInstance().GetRes();
